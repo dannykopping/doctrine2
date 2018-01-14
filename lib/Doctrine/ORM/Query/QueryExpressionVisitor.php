@@ -44,6 +44,9 @@ class QueryExpressionVisitor extends ExpressionVisitor
         Comparison::LTE => Expr\Comparison::LTE
     );
 
+    /** @var array */
+    private static $customComparisons = [];
+
     /**
      * @var array
      */
@@ -187,6 +190,10 @@ class QueryExpressionVisitor extends ExpressionVisitor
                 return $this->expr->like($field, $placeholder);
 
             default:
+                if(!empty(static::$customComparisons[$comparison->getOperator()])) {
+                    return call_user_func_array(static::$customComparisons[$comparison->getOperator()], [$field, $placeholder]);
+                }
+
                 $operator = self::convertComparisonOperator($comparison->getOperator());
                 if ($operator) {
                     $this->parameters[] = $parameter;
@@ -207,5 +214,10 @@ class QueryExpressionVisitor extends ExpressionVisitor
     public function walkValue(Value $value)
     {
         return $value->getValue();
+    }
+
+    public static function addCustomComparison($key, callable $lambda)
+    {
+        static::$customComparisons[$key] = $lambda;
     }
 }

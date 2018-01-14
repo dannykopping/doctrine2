@@ -137,4 +137,14 @@ class QueryExpressionVisitorTest extends \PHPUnit_Framework_TestCase
 
         $this->assertCount(0, $this->visitor->getParameters());
     }
+
+    public function testInjectedComparator()
+    {
+        QueryExpressionVisitor::addCustomComparison('blah', function($field, $placeholder) {
+            return "FIND_IN_SET($field, $placeholder)";
+        });
+
+        $queryExpr = "FIND_IN_SET(o.field, :field)";
+        $this->assertEquals($queryExpr, $this->visitor->walkComparison(new CriteriaComparison('field', 'blah', ':field')));
+    }
 }
