@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests;
 
 /**
@@ -10,7 +12,7 @@ namespace Doctrine\Tests;
 class OrmPerformanceTestCase extends OrmFunctionalTestCase
 {
     /**
-     * @var integer
+     * @var int
      */
     protected $maxRunningTime = 0;
 
@@ -46,15 +48,15 @@ class OrmPerformanceTestCase extends OrmFunctionalTestCase
      */
     public function setMaxRunningTime($maxRunningTime)
     {
-        if (is_integer($maxRunningTime) && $maxRunningTime >= 0) {
-            $this->maxRunningTime = $maxRunningTime;
-        } else {
+        if (! (is_int($maxRunningTime) && $maxRunningTime >= 0)) {
             throw new \InvalidArgumentException;
         }
+
+        $this->maxRunningTime = $maxRunningTime;
     }
 
     /**
-     * @return integer
+     * @return int
      *
      * @since Method available since Release 2.3.0
      */

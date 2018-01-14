@@ -1,34 +1,27 @@
 <?php
 
-require_once '../../lib/vendor/doctrine-common/lib/Doctrine/Common/ClassLoader.php';
-
-$classLoader = new \Doctrine\Common\ClassLoader('Doctrine\ORM', realpath(__DIR__ . '/../../lib'));
-$classLoader->register();
-$classLoader = new \Doctrine\Common\ClassLoader('Doctrine\DBAL', realpath(__DIR__ . '/../../lib/vendor/doctrine-dbal/lib'));
-$classLoader->register();
-$classLoader = new \Doctrine\Common\ClassLoader('Doctrine\Common', realpath(__DIR__ . '/../../lib/vendor/doctrine-common/lib'));
-$classLoader->register();
-$classLoader = new \Doctrine\Common\ClassLoader('Symfony', realpath(__DIR__ . '/../../lib/vendor'));
-$classLoader->register();
-$classLoader = new \Doctrine\Common\ClassLoader('Entities', __DIR__);
-$classLoader->register();
-$classLoader = new \Doctrine\Common\ClassLoader('Proxies', __DIR__);
-$classLoader->register();
-
-require __DIR__ . '/cli-config.php';
+$em = require_once __DIR__.'/bootstrap.php';
 
 $cli = new \Symfony\Component\Console\Application('Doctrine Command Line Interface', Doctrine\Common\Version::VERSION);
 $cli->setCatchExceptions(true);
 
-// Variable $helpers is defined inside cli-config.php
-$cli->setHelperSet($helpers);
+$cli->setHelperSet(new Symfony\Component\Console\Helper\HelperSet(
+    [
+        'db' => new \Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper($em->getConnection()),
+        'em' => new \Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper($em)
+    ]
+));
 
-$cli->addCommands(array(
+$cli->addCommands(
+    [
     // DBAL Commands
     new \Doctrine\DBAL\Tools\Console\Command\RunSqlCommand(),
     new \Doctrine\DBAL\Tools\Console\Command\ImportCommand(),
 
     // ORM Commands
+    new \Doctrine\ORM\Tools\Console\Command\ClearCache\QueryRegionCommand(),
+    new \Doctrine\ORM\Tools\Console\Command\ClearCache\EntityRegionCommand(),
+    new \Doctrine\ORM\Tools\Console\Command\ClearCache\CollectionRegionCommand(),
     new \Doctrine\ORM\Tools\Console\Command\ClearCache\MetadataCommand(),
     new \Doctrine\ORM\Tools\Console\Command\ClearCache\ResultCommand(),
     new \Doctrine\ORM\Tools\Console\Command\ClearCache\QueryCommand(),
@@ -36,7 +29,6 @@ $cli->addCommands(array(
     new \Doctrine\ORM\Tools\Console\Command\SchemaTool\UpdateCommand(),
     new \Doctrine\ORM\Tools\Console\Command\SchemaTool\DropCommand(),
     new \Doctrine\ORM\Tools\Console\Command\EnsureProductionSettingsCommand(),
-    new \Doctrine\ORM\Tools\Console\Command\ConvertDoctrine1SchemaCommand(),
     new \Doctrine\ORM\Tools\Console\Command\GenerateRepositoriesCommand(),
     new \Doctrine\ORM\Tools\Console\Command\GenerateEntitiesCommand(),
     new \Doctrine\ORM\Tools\Console\Command\GenerateProxiesCommand(),
@@ -44,5 +36,6 @@ $cli->addCommands(array(
     new \Doctrine\ORM\Tools\Console\Command\RunDqlCommand(),
     new \Doctrine\ORM\Tools\Console\Command\ValidateSchemaCommand(),
 
-));
+    ]
+);
 $cli->run();

@@ -1,41 +1,42 @@
 <?php
-/*
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * This software consists of voluntary contributions made by many individuals
- * and is licensed under the LGPL. For more information, see
- * <http://www.doctrine-project.org>.
- */
+
+declare(strict_types=1);
 
 namespace Doctrine\Tests\Models\DirectoryTree;
 
+use Doctrine\ORM\Annotation as ORM;
+
 /**
- * @MappedSuperclass
+ * @ORM\MappedSuperClass
  */
 abstract class AbstractContentItem
 {
     /**
-     * @Id @Column(type="integer") @GeneratedValue
+     * @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue
      */
     private $id;
 
     /**
-     * @ManyToOne(targetEntity="Directory")
+     * @ORM\ManyToOne(targetEntity=Directory::class)
      */
     protected $parentDirectory;
 
-    /** @column(type="string") */
+    /** @ORM\Column(type="string") */
     protected $name;
+
+    /**
+     * This field is transient and private on purpose
+     *
+     * @var bool
+     */
+    private $nodeIsLoaded = false;
+
+    /**
+     * This field is transient on purpose
+     *
+     * @var mixed
+     */
+    public static $fileSystem;
 
     public function __construct(Directory $parentDir = null)
     {
@@ -60,5 +61,21 @@ abstract class AbstractContentItem
     public function getParent()
     {
         return $this->parentDirectory;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getNodeIsLoaded()
+    {
+        return $this->nodeIsLoaded;
+    }
+
+    /**
+     * @param bool $nodeIsLoaded
+     */
+    public function setNodeIsLoaded($nodeIsLoaded)
+    {
+        $this->nodeIsLoaded = (bool) $nodeIsLoaded;
     }
 }

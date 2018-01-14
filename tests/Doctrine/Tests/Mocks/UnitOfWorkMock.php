@@ -1,39 +1,49 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\Mocks;
+
+use Doctrine\ORM\UnitOfWork;
 
 /**
  * Mock class for UnitOfWork.
  */
-class UnitOfWorkMock extends \Doctrine\ORM\UnitOfWork
+class UnitOfWorkMock extends UnitOfWork
 {
     /**
      * @var array
      */
-    private $_mockDataChangeSets = array();
+    private $mockDataChangeSets = [];
 
     /**
      * @var array|null
      */
-    private $_persisterMock;
+    private $persisterMock;
 
     /**
      * {@inheritdoc}
      */
     public function getEntityPersister($entityName)
     {
-        return isset($this->_persisterMock[$entityName]) ?
-                $this->_persisterMock[$entityName] : parent::getEntityPersister($entityName);
+        return $this->persisterMock[$entityName]
+            ?? parent::getEntityPersister($entityName);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getEntityChangeSet($entity)
+    public function & getEntityChangeSet($entity)
     {
-        $oid = spl_object_hash($entity);
-        return isset($this->_mockDataChangeSets[$oid]) ?
-                $this->_mockDataChangeSets[$oid] : parent::getEntityChangeSet($entity);
+        $oid = spl_object_id($entity);
+
+        if (isset($this->mockDataChangeSets[$oid])) {
+            return $this->mockDataChangeSets[$oid];
+        }
+
+        $data = parent::getEntityChangeSet($entity);
+
+        return $data;
     }
 
     /* MOCK API */
@@ -42,21 +52,13 @@ class UnitOfWorkMock extends \Doctrine\ORM\UnitOfWork
      * Sets a (mock) persister for an entity class that will be returned when
      * getEntityPersister() is invoked for that class.
      *
-     * @param string                                        $entityName
-     * @param \Doctrine\ORM\Persisters\BasicEntityPersister $persister
+     * @param string                                               $entityName
+     * @param \Doctrine\ORM\Persisters\Entity\BasicEntityPersister $persister
      *
      * @return void
      */
     public function setEntityPersister($entityName, $persister)
     {
-        $this->_persisterMock[$entityName] = $persister;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setOriginalEntityData($entity, array $originalData)
-    {
-        $this->_originalEntityData[spl_object_hash($entity)] = $originalData;
+        $this->persisterMock[$entityName] = $persister;
     }
 }

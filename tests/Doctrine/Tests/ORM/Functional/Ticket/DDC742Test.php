@@ -1,47 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\ORM\Functional\Ticket;
 
+use Doctrine\Common\Cache\FilesystemCache;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Annotation as ORM;
 
-require_once __DIR__ . '/../../../TestInit.php';
-
+/**
+ * @group non-cacheable
+ */
 class DDC742Test extends \Doctrine\Tests\OrmFunctionalTestCase
 {
-    private $userCm;
-    private $commentCm;
-
+    /**
+     * {@inheritDoc}
+     */
     protected function setUp()
     {
         parent::setUp();
 
-        if (\extension_loaded('memcache') && @fsockopen('localhost', 11211)) {
-            $memcache = new \Memcache();
-            $memcache->addServer('localhost');
-            $memcache->flush();
+        $testDir = sys_get_temp_dir() . '/DDC742Test' . uniqid();
 
-            $cacheDriver = new \Doctrine\Common\Cache\MemcacheCache();
-            $cacheDriver->setMemcache($memcache);
+        mkdir($testDir);
 
-            $this->_em->getMetadataFactory()->setCacheDriver($cacheDriver);
-        } else if (\extension_loaded('apc')) {
-            $this->_em->getMetadataFactory()->setCacheDriver(new \Doctrine\Common\Cache\ApcCache());
-        } else {
-            $this->markTestSkipped('Test only works with a cache enabled.');
-        }
+        // using a Filesystemcache to ensure that the cached data is serialized
+        $this->em->getMetadataFactory()->setCacheDriver(new FilesystemCache($testDir));
 
         try {
-            $this->_schemaTool->createSchema(array(
-                $this->_em->getClassMetadata(__NAMESPACE__ . '\DDC742User'),
-                $this->_em->getClassMetadata(__NAMESPACE__ . '\DDC742Comment')
-            ));
-        } catch(\Exception $e) {
-
+            $this->schemaTool->createSchema(
+                [
+                    $this->em->getClassMetadata(DDC742User::class),
+                    $this->em->getClassMetadata(DDC742Comment::class)
+                ]
+            );
+        } catch (\Exception $e) {
         }
 
         // make sure classes will be deserialized from caches
-        $this->_em->getMetadataFactory()->setMetadataFor(__NAMESPACE__ . '\DDC742User', null);
-        $this->_em->getMetadataFactory()->setMetadataFor(__NAMESPACE__ . '\DDC742Comment', null);
+        $this->em->getMetadataFactory()->setMetadataFor(DDC742User::class, null);
+        $this->em->getMetadataFactory()->setMetadataFor(DDC742Comment::class, null);
     }
 
     public function testIssue()
@@ -62,70 +60,75 @@ class DDC742Test extends \Doctrine\Tests\OrmFunctionalTestCase
         $user->favoriteComments->add($comment1);
         $user->favoriteComments->add($comment2);
 
-        $this->_em->persist($user);
-        $this->_em->persist($comment1);
-        $this->_em->persist($comment2);
-        $this->_em->persist($comment3);
-        $this->_em->flush();
-        $this->_em->clear();
+        $this->em->persist($user);
+        $this->em->persist($comment1);
+        $this->em->persist($comment2);
+        $this->em->persist($comment3);
+        $this->em->flush();
+        $this->em->clear();
 
-        $user = $this->_em->find(get_class($user), $user->id);
-        $comment3 = $this->_em->find(get_class($comment3), $comment3->id);
-        $user->favoriteComments->add($comment3);
-        $this->_em->flush();
+        $user = $this->em->find(DDC742User::class, $user->id);
+        $user->favoriteComments->add($this->em->find(DDC742Comment::class, $comment3->id));
+
+        $this->em->flush();
+
+        $this->addToAssertionCount(1);
     }
 }
 
 /**
- * @Entity
- * @Table(name="users")
+ * @ORM\Entity
+ * @ORM\Table(name="ddc742_users")
  */
 class DDC742User
 {
     /**
      * User Id
      *
-     * @Id
-     * @GeneratedValue(strategy="AUTO")
-     * @Column(type="integer")
-     * @var integer
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="AUTO")
+     * @ORM\Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @Column(length=100, type="string")
+     * @ORM\Column(length=100, type="string")
      * @var string
      */
     public $title;
+
     /**
-     * @ManyToMany(targetEntity="DDC742Comment", cascade={"persist"}, fetch="EAGER")
-     * @JoinTable(
+     * @ORM\ManyToMany(targetEntity=DDC742Comment::class, cascade={"persist"}, fetch="EAGER")
+     * @ORM\JoinTable(
      *  name="user_comments",
-     *  joinColumns={@JoinColumn(name="user_id",referencedColumnName="id")},
-     *  inverseJoinColumns={@JoinColumn(name="comment_id", referencedColumnName="id")}
+     *  joinColumns={@ORM\JoinColumn(name="user_id",referencedColumnName="id")},
+     *  inverseJoinColumns={@ORM\JoinColumn(name="comment_id", referencedColumnName="id")}
      * )
      *
-     * @var Doctrine\ORM\PersistentCollection
+     * @var \Doctrine\ORM\PersistentCollection
      */
     public $favoriteComments;
 }
 
 /**
- * @Entity
- * @Table(name="comments")
+ * @ORM\Entity
+ * @ORM\Table(name="ddc742_comments")
  */
 class DDC742Comment
 {
     /**
      * User Id
      *
-     * @Id
-     * @GeneratedValue(strategy="AUTO")
-     * @Column(type="integer")
-     * @var integer
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="AUTO")
+     * @ORM\Column(type="integer")
+     * @var int
      */
     public $id;
+
     /**
-     * @Column(length=100, type="string")
+     * @ORM\Column(length=100, type="string")
      * @var string
      */
     public $content;

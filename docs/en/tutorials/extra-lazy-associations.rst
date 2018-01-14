@@ -15,10 +15,12 @@ the first time its accessed. If you mark an association as extra lazy the follow
 can be called without triggering a full load of the collection:
 
 -  ``Collection#contains($entity)``
+-  ``Collection#containsKey($key)`` (available with Doctrine 2.5)
 -  ``Collection#count()``
+-  ``Collection#get($key)``  (available with Doctrine 2.4)
 -  ``Collection#slice($offset, $length = null)``
 
-For each of this three methods the following semantics apply:
+For each of the above methods the following semantics apply:
 
 -  For each call, if the Collection is not yet loaded, issue a straight SELECT statement against the database.
 -  For each call, if the collection is already loaded, fallback to the default functionality for lazy collections. No additional SELECT statements are executed.
@@ -32,7 +34,6 @@ Additionally even with Doctrine 2.0 the following methods do not trigger the col
 With extra lazy collections you can now not only add entities to large collections but also paginate them
 easily using a combination of ``count`` and ``slice``.
 
-
 Enabling Extra-Lazy Associations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -44,15 +45,18 @@ switch to extra lazy as shown in these examples:
     .. code-block:: php
 
         <?php
+
         namespace Doctrine\Tests\Models\CMS;
 
+        use Doctrine\ORM\Annotation as ORM;
+
         /**
-         * @Entity
+         * @ORM\Entity
          */
         class CmsGroup
         {
             /**
-             * @ManyToMany(targetEntity="CmsUser", mappedBy="groups", fetch="EXTRA_LAZY")
+             * @ORM\ManyToMany(targetEntity="CmsUser", mappedBy="groups", fetch="EXTRA_LAZY")
              */
             public $users;
         }

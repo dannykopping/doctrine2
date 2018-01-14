@@ -1,11 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\ORM\Functional\Ticket;
 
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\ORM\UnitOfWork;
-
-require_once __DIR__ . '/../../../TestInit.php';
+use Doctrine\ORM\Annotation as ORM;
 
 /**
  * @group DDC-1514
@@ -17,11 +17,13 @@ class DDC1514Test extends \Doctrine\Tests\OrmFunctionalTestCase
         parent::setUp();
 
         try {
-            $this->_schemaTool->createSchema(array(
-                $this->_em->getClassMetadata(__NAMESPACE__ . '\DDC1514EntityA'),
-                $this->_em->getClassMetadata(__NAMESPACE__ . '\DDC1514EntityB'),
-                $this->_em->getClassMetadata(__NAMESPACE__ . '\DDC1514EntityC'),
-            ));
+            $this->schemaTool->createSchema(
+                [
+                $this->em->getClassMetadata(DDC1514EntityA::class),
+                $this->em->getClassMetadata(DDC1514EntityB::class),
+                $this->em->getClassMetadata(DDC1514EntityC::class),
+                ]
+            );
         } catch (\Exception $ignored) {
         }
     }
@@ -29,10 +31,10 @@ class DDC1514Test extends \Doctrine\Tests\OrmFunctionalTestCase
     public function testIssue()
     {
         $a1 = new DDC1514EntityA();
-        $a1->title = "foo";
+        $a1->title = "1foo";
 
         $a2 = new DDC1514EntityA();
-        $a2->title = "bar";
+        $a2->title = "2bar";
 
         $b1 = new DDC1514EntityB();
         $b1->entityAFrom = $a1;
@@ -46,33 +48,37 @@ class DDC1514Test extends \Doctrine\Tests\OrmFunctionalTestCase
         $c->title = "baz";
         $a2->entityC = $c;
 
-        $this->_em->persist($a1);
-        $this->_em->persist($a2);
-        $this->_em->persist($b1);
-        $this->_em->persist($b2);
-        $this->_em->persist($c);
-        $this->_em->flush();
-        $this->_em->clear();
+        $this->em->persist($a1);
+        $this->em->persist($a2);
+        $this->em->persist($b1);
+        $this->em->persist($b2);
+        $this->em->persist($c);
+        $this->em->flush();
+        $this->em->clear();
 
-        $dql = "SELECT a, b, ba, c FROM " . __NAMESPACE__ . "\DDC1514EntityA AS a LEFT JOIN a.entitiesB AS b LEFT JOIN b.entityATo AS ba LEFT JOIN a.entityC AS c";
-        $results = $this->_em->createQuery($dql)->getResult();
+        $dql = "SELECT a, b, ba, c FROM " . __NAMESPACE__ . "\DDC1514EntityA AS a LEFT JOIN a.entitiesB AS b LEFT JOIN b.entityATo AS ba LEFT JOIN a.entityC AS c ORDER BY a.title";
+        $results = $this->em->createQuery($dql)->getResult();
 
-        $this->assertEquals($c->title, $results[1]->entityC->title);
+        self::assertEquals($a1->id, $results[0]->id);
+        self::assertNull($results[0]->entityC);
+
+        self::assertEquals($a2->id, $results[1]->id);
+        self::assertEquals($c->title, $results[1]->entityC->title);
     }
 }
 
 /**
- * @Entity
+ * @ORM\Entity
  */
 class DDC1514EntityA
 {
-    /** @Id @Column(type="integer") @GeneratedValue */
+    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue */
     public $id;
-    /** @Column */
+    /** @ORM\Column */
     public $title;
-    /** @ManyToMany(targetEntity="DDC1514EntityB", mappedBy="entityAFrom") */
+    /** @ORM\ManyToMany(targetEntity=DDC1514EntityB::class, mappedBy="entityAFrom") */
     public $entitiesB;
-    /** @ManyToOne(targetEntity="DDC1514EntityC") */
+    /** @ORM\ManyToOne(targetEntity=DDC1514EntityC::class) */
     public $entityC;
 
     public function __construct()
@@ -82,30 +88,30 @@ class DDC1514EntityA
 }
 
 /**
- * @Entity
+ * @ORM\Entity
  */
 class DDC1514EntityB
 {
-    /** @Id @Column(type="integer") @GeneratedValue */
+    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue */
     public $id;
 
     /**
-     * @ManyToOne(targetEntity="DDC1514EntityA", inversedBy="entitiesB")
+     * @ORM\ManyToOne(targetEntity=DDC1514EntityA::class, inversedBy="entitiesB")
      */
     public $entityAFrom;
     /**
-     * @ManyToOne(targetEntity="DDC1514EntityA")
+     * @ORM\ManyToOne(targetEntity=DDC1514EntityA::class)
      */
     public $entityATo;
 }
 
 /**
- * @Entity
+ * @ORM\Entity
  */
 class DDC1514EntityC
 {
-    /** @Id @Column(type="integer") @GeneratedValue */
+    /** @ORM\Id @ORM\Column(type="integer") @ORM\GeneratedValue */
     public $id;
-    /** @Column */
+    /** @ORM\Column */
     public $title;
 }

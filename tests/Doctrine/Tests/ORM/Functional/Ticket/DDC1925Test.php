@@ -1,10 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\ORM\Functional\Ticket;
 
 use Doctrine\Common\Collections\ArrayCollection;
-
-require_once __DIR__ . '/../../../TestInit.php';
+use Doctrine\ORM\Annotation as ORM;
 
 /**
  * @group DDC-1925
@@ -14,57 +15,67 @@ class DDC1925Test extends \Doctrine\Tests\OrmFunctionalTestCase
 {
     public function testIssue()
     {
-        $this->_schemaTool->createSchema(array(
-            $this->_em->getClassMetadata(__NAMESPACE__ . '\\DDC1925User'),
-            $this->_em->getClassMetadata(__NAMESPACE__ . '\\DDC1925Product'),
-        ));
+        $this->schemaTool->createSchema(
+            [
+                $this->em->getClassMetadata(DDC1925User::class),
+                $this->em->getClassMetadata(DDC1925Product::class),
+            ]
+        );
 
         $user = new DDC1925User();
         $user->setTitle("Test User");
-        $this->_em->persist($user);
 
         $product = new DDC1925Product();
         $product->setTitle("Test product");
-        $this->_em->persist($product);
-        $this->_em->flush();
+
+        $this->em->persist($user);
+        $this->em->persist($product);
+        $this->em->flush();
 
         $product->addBuyer($user);
 
-        $this->_em->getUnitOfWork()->computeChangeSets();
+        $this->em->getUnitOfWork()
+                  ->computeChangeSets();
 
-        $this->_em->persist($product);
-        $this->_em->flush();
+        $this->em->persist($product);
+        $this->em->flush();
+        $this->em->clear();
+
+        /** @var DDC1925Product $persistedProduct */
+        $persistedProduct = $this->em->find(DDC1925Product::class, $product->getId());
+
+        self::assertEquals($user, $persistedProduct->getBuyers()->first());
     }
 }
 
 /**
- * @Table
- * @Entity
+ * @ORM\Table
+ * @ORM\Entity
  */
 class DDC1925Product
 {
     /**
-     * @var integer $id
+     * @var int $id
      *
-     * @Column(name="id", type="integer")
-     * @Id
-     * @GeneratedValue(strategy="AUTO")
+     * @ORM\Column(name="id", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
      * @var string $title
      *
-     * @Column(name="title", type="string", length=255)
+     * @ORM\Column(name="title", type="string", length=255)
      */
     private $title;
 
     /**
-     * @ManyToMany(targetEntity="DDC1925User")
-     * @JoinTable(
+     * @ORM\ManyToMany(targetEntity=DDC1925User::class)
+     * @ORM\JoinTable(
      *   name="user_purchases",
-     *   joinColumns={@JoinColumn(name="product_id", referencedColumnName="id")},
-     *   inverseJoinColumns={@JoinColumn(name="user_id", referencedColumnName="id")}
+     *   joinColumns={@ORM\JoinColumn(name="product_id", referencedColumnName="id")},
+     *   inverseJoinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")}
      * )
      */
     private $buyers;
@@ -78,7 +89,7 @@ class DDC1925Product
     }
 
     /**
-     * @return integer
+     * @return int
      */
     public function getId()
     {
@@ -104,15 +115,7 @@ class DDC1925Product
     }
 
     /**
-     * @param string $buyers
-     */
-    public function setBuyers($buyers)
-    {
-        $this->buyers = $buyers;
-    }
-
-    /**
-     * @return string
+     * @return ArrayCollection
      */
     public function getBuyers()
     {
@@ -129,31 +132,31 @@ class DDC1925Product
 }
 
 /**
- * @Table
- * @Entity
+ * @ORM\Table
+ * @ORM\Entity
  */
 class DDC1925User
 {
     /**
-     * @var integer
+     * @var int
      *
-     * @Column(name="id", type="integer")
-     * @Id
-     * @GeneratedValue(strategy="AUTO")
+     * @ORM\Column(name="id", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="AUTO")
      */
     private $id;
 
     /**
      * @var string
      *
-     * @Column(name="title", type="string", length=255)
+     * @ORM\Column(name="title", type="string", length=255)
      */
     private $title;
 
     /**
      * Get id
      *
-     * @return integer
+     * @return int
      */
     public function getId()
     {

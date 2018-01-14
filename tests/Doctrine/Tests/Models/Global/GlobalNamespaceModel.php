@@ -1,67 +1,74 @@
 <?php
 
+declare(strict_types=1);
+
+use Doctrine\ORM\Annotation as ORM;
+
 /**
- * @entity
- * @table(name="articles")
+ * @ORM\Entity
+ * @ORM\Table(name="articles")
  */
 class DoctrineGlobal_Article
 {
     /**
-     * @id
-     * @column(type="int")
+     * @ORM\Id
+     * @ORM\Column(type="integer")
      */
     protected $id;
 
     /**
-     * @column(type="string")
+     * @ORM\Column(type="string")
      */
     protected $headline;
 
     /**
-     * @column(type="text")
+     * @ORM\Column(type="text")
      */
     protected $text;
 
     /**
-     * @ManyToMany(targetEntity="DoctrineGlobal_User")
-     * @JoinTable(name="author_articles",
-     *      joinColumns={@JoinColumn(name="article_id", referencedColumnName="id")},
-     *      inverseJoinColumns={@JoinColumn(name="author_id", referencedColumnName="id", unique=true)}
+     * @ORM\ManyToMany(targetEntity=DoctrineGlobal_User::class)
+     * @ORM\JoinTable(name="author_articles",
+     *      joinColumns={@ORM\JoinColumn(name="article_id", referencedColumnName="id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="author_id", referencedColumnName="id", unique=true)}
      * )
      */
     protected $author;
 
     /**
-     * @ManyToMany(targetEntity="\DoctrineGlobal_User")
-     * @JoinTable(name="editor_articles",
-     *      joinColumns={@JoinColumn(name="article_id", referencedColumnName="id")},
-     *      inverseJoinColumns={@JoinColumn(name="editor_id", referencedColumnName="id", unique=true)}
+     * @ORM\ManyToMany(targetEntity=DoctrineGlobal_User::class)
+     * @ORM\JoinTable(name="editor_articles",
+     *      joinColumns={@ORM\JoinColumn(name="article_id", referencedColumnName="id")},
+     *      inverseJoinColumns={@ORM\JoinColumn(name="editor_id", referencedColumnName="id", unique=true)}
      * )
      */
     protected $editor;
 }
 
 /**
- * @Entity
- * @Table(name="users")
+ * @ORM\Entity
+ * @ORM\Table(name="users")
  */
 class DoctrineGlobal_User
 {
     /**
-     * @Id
-     * @column(type="integer")
+     * @ORM\Id
+     * @ORM\Column(type="integer")
+     *
      * @var int
      */
     private $id;
 
     /**
-     * @column(type="string", length=64)
+     * @ORM\Column(type="string", length=64)
+     *
      * @var string
      */
     private $username;
 
     /**
-     * @column(type="string", length=128)
+     * @ORM\Column(type="string", length=128)
+     *
      * @var string
      */
     private $email;

@@ -39,7 +39,7 @@ possible either. See the following example:
         name VARCHAR,
         PRIMARY KEY(id)
     );
-    
+
     CREATE TABLE product_attributes (
         product_id INTEGER,
         attribute_name VARCHAR,
@@ -65,27 +65,6 @@ Where the ``attribute_name`` column contains the key and
 The feature request for persistence of primitive value arrays
 `is described in the DDC-298 ticket <http://www.doctrine-project.org/jira/browse/DDC-298>`_.
 
-Value Objects
-~~~~~~~~~~~~~
-
-There is currently no native support value objects in Doctrine
-other than for ``DateTime`` instances or if you serialize the
-objects using ``serialize()/deserialize()`` which the DBAL Type
-"object" supports.
-
-The feature request for full value-object support
-`is described in the DDC-93 ticket <http://www.doctrine-project.org/jira/browse/DDC-93>`_.
-
-
-Cascade Merge with Bi-directional Associations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There are two bugs now that concern the use of cascade merge in combination with bi-directional associations.
-Make sure to study the behavior of cascade merge if you are using it:
-
--  `DDC-875 <http://www.doctrine-project.org/jira/browse/DDC-875>`_ Merge can sometimes add the same entity twice into a collection
--  `DDC-763 <http://www.doctrine-project.org/jira/browse/DDC-763>`_ Cascade merge on associated entities can insert too many rows through "Persistence by Reachability"
-
 Custom Persisters
 ~~~~~~~~~~~~~~~~~
 
@@ -95,10 +74,8 @@ Currently there is no way to overwrite the persister implementation
 for a given entity, however there are several use-cases that can
 benefit from custom persister implementations:
 
-
 -  `Add Upsert Support <http://www.doctrine-project.org/jira/browse/DDC-668>`_
 -  `Evaluate possible ways in which stored-procedures can be used <http://www.doctrine-project.org/jira/browse/DDC-445>`_
--  The previous Filter Rules Feature Request
 
 Persist Keys of Collections
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -126,10 +103,10 @@ in the core library. We don't think behaviors add more value than
 they cost pain and debugging hell. Please see the many different
 blog posts we have written on this topics:
 
--  `Doctrine2 "Behaviors" in a Nutshell <http://www.doctrine-project.org/blog/doctrine2-behaviours-nutshell>`_
--  `A re-usable Versionable behavior for Doctrine2 <http://www.doctrine-project.org/blog/doctrine2-versionable>`_
--  `Write your own ORM on top of Doctrine2 <http://www.doctrine-project.org/blog/your-own-orm-doctrine2>`_
--  `Doctrine 2 Behavioral Extensions <http://www.doctrine-project.org/blog/doctrine2-behavioral-extensions>`_
+-  `Doctrine2 "Behaviors" in a Nutshell <http://www.doctrine-project.org/2010/02/17/doctrine2-behaviours-nutshell.html>`_
+-  `A re-usable Versionable behavior for Doctrine2 <http://www.doctrine-project.org/2010/02/24/doctrine2-versionable.html>`_
+-  `Write your own ORM on top of Doctrine2 <http://www.doctrine-project.org/2010/07/19/your-own-orm-doctrine2.html>`_
+-  `Doctrine 2 Behavioral Extensions <http://www.doctrine-project.org/2010/11/18/doctrine2-behavioral-extensions.html>`_
 -  `Doctrator <https://github.com/pablodip/doctrator`>_
 
 Doctrine 2 has enough hooks and extension points so that **you** can
@@ -144,7 +121,6 @@ NestedSet was offered as a behavior in Doctrine 1 and will not be
 included in the core of Doctrine 2. However there are already two
 extensions out there that offer support for Nested Set with
 Doctrine 2:
-
 
 -  `Doctrine2 Hierarchical-Structural Behavior <http://github.com/guilhermeblanco/Doctrine2-Hierarchical-Structural-Behavior>`_
 -  `Doctrine2 NestedSet <http://github.com/blt04/doctrine2-nestedset>`_
@@ -170,7 +146,6 @@ edge case problems Doctrine 2 does **NOT** do automatic identifier
 quoting. This can lead to problems when trying to get
 legacy-databases to work with Doctrine 2.
 
-
 -  You can quote column-names as described in the
    :doc:`Basic-Mapping <basic-mapping>` section.
 -  You cannot quote join column names.
@@ -187,3 +162,10 @@ Microsoft SQL Server and Doctrine "datetime"
 
 Doctrine assumes that you use ``DateTime2`` data-types. If your legacy database contains DateTime
 datatypes then you have to add your own data-type (see Basic Mapping for an example).
+
+MySQL with MyISAM tables
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Doctrine cannot provide atomic operations when calling ``EntityManager#flush()`` if one
+of the tables involved uses the storage engine MyISAM. You must use InnoDB or
+other storage engines that support transactions if you need integrity.

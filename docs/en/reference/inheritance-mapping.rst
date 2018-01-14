@@ -25,7 +25,6 @@ appear in the middle of an otherwise mapped inheritance hierarchy
     For further support of inheritance, the single or
     joined table inheritance features have to be used.
 
-
 Example:
 
 .. code-block:: php
@@ -43,10 +42,10 @@ Example:
          * @JoinColumn(name="related1_id", referencedColumnName="id")
          */
         protected $mappedRelated1;
-    
+
         // ... more fields and methods
     }
-    
+
     /** @Entity */
     class EntitySubClass extends MappedSuperclassBase
     {
@@ -54,7 +53,7 @@ Example:
         private $id;
         /** @Column(type="string") */
         private $name;
-    
+
         // ... more fields and methods
     }
 
@@ -81,45 +80,66 @@ discriminator column is used.
 
 Example:
 
-.. code-block:: php
+.. configuration-block::
 
-    <?php
-    namespace MyProject\Model;
-    
-    /**
-     * @Entity
-     * @InheritanceType("SINGLE_TABLE")
-     * @DiscriminatorColumn(name="discr", type="string")
-     * @DiscriminatorMap({"person" = "Person", "employee" = "Employee"})
-     */
-    class Person
-    {
-        // ...
-    }
-    
-    /**
-     * @Entity
-     */
-    class Employee extends Person
-    {
-        // ...
-    }
+    .. code-block:: php
+
+        <?php
+        namespace MyProject\Model;
+
+        /**
+         * @Entity
+         * @InheritanceType("SINGLE_TABLE")
+         * @DiscriminatorColumn(name="discr", type="string")
+         * @DiscriminatorMap({"person" = "Person", "employee" = "Employee"})
+         */
+        class Person
+        {
+            // ...
+        }
+
+        /**
+         * @Entity
+         */
+        class Employee extends Person
+        {
+            // ...
+        }
+
+    .. code-block:: yaml
+
+        MyProject\Model\Person:
+          type: entity
+          inheritanceType: SINGLE_TABLE
+          discriminatorColumn:
+            name: discr
+            type: string
+          discriminatorMap:
+            person: Person
+            employee: Employee
+
+        MyProject\Model\Employee:
+          type: entity
 
 Things to note:
 
-
--  The @InheritanceType, @DiscriminatorColumn and @DiscriminatorMap
-   must be specified on the topmost class that is part of the mapped
-   entity hierarchy.
+-  The @InheritanceType and @DiscriminatorColumn must be specified
+   on the topmost class that is part of the mapped entity hierarchy.
 -  The @DiscriminatorMap specifies which values of the
    discriminator column identify a row as being of a certain type. In
    the case above a value of "person" identifies a row as being of
    type ``Person`` and "employee" identifies a row as being of type
    ``Employee``.
+-  All entity classes that is part of the mapped entity hierarchy
+   (including the topmost class) should be specified in the
+   @DiscriminatorMap. In the case above Person class included.
 -  The names of the classes in the discriminator map do not need to
    be fully qualified if the classes are contained in the same
    namespace as the entity class on which the discriminator map is
    applied.
+-  If no discriminator map is provided, then the map is generated
+   automatically. The automatically generated discriminator map
+   contains the lowercase short name of each class as key.
 
 Design-time considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,12 +157,12 @@ This strategy is very efficient for querying across all types in
 the hierarchy or for specific types. No table joins are required,
 only a WHERE clause listing the type identifiers. In particular,
 relationships involving types that employ this mapping strategy are
-very performant.
+very performing.
 
 There is a general performance consideration with Single Table
-Inheritance: If the target-entity of a many-to-one or one-to-one 
-association is an STI entity, it is preferable for performance reasons that it 
-be a leaf entity in the inheritance hierarchy, (ie. have no subclasses). 
+Inheritance: If the target-entity of a many-to-one or one-to-one
+association is an STI entity, it is preferable for performance reasons that it
+be a leaf entity in the inheritance hierarchy, (ie. have no subclasses).
 Otherwise Doctrine *CANNOT* create proxy instances
 of this entity and will *ALWAYS* load the entity eagerly.
 
@@ -174,7 +194,7 @@ Example:
 
     <?php
     namespace MyProject\Model;
-    
+
     /**
      * @Entity
      * @InheritanceType("JOINED")
@@ -185,7 +205,7 @@ Example:
     {
         // ...
     }
-    
+
     /** @Entity */
     class Employee extends Person
     {
@@ -193,7 +213,6 @@ Example:
     }
 
 Things to note:
-
 
 -  The @InheritanceType, @DiscriminatorColumn and @DiscriminatorMap
    must be specified on the topmost class that is part of the mapped
@@ -207,6 +226,9 @@ Things to note:
    be fully qualified if the classes are contained in the same
    namespace as the entity class on which the discriminator map is
    applied.
+-  If no discriminator map is provided, then the map is generated
+   automatically. The automatically generated discriminator map
+   contains the lowercase short name of each class as key.
 
 .. note::
 
@@ -215,7 +237,6 @@ Things to note:
     inheritance makes use of the foreign key property
     ``ON DELETE CASCADE`` in all database implementations. A failure to
     implement this yourself will lead to dead rows in the database.
-
 
 Design-time considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -243,9 +264,9 @@ themselves on access of any subtype fields, so accessing fields of
 subtypes after such a query is not safe.
 
 There is a general performance consideration with Class Table
-Inheritance: If the target-entity of a many-to-one or one-to-one 
-association is a CTI entity, it is preferable for performance reasons that it 
-be a leaf entity in the inheritance hierarchy, (ie. have no subclasses). 
+Inheritance: If the target-entity of a many-to-one or one-to-one
+association is a CTI entity, it is preferable for performance reasons that it
+be a leaf entity in the inheritance hierarchy, (ie. have no subclasses).
 Otherwise Doctrine *CANNOT* create proxy instances
 of this entity and will *ALWAYS* load the entity eagerly.
 
@@ -260,13 +281,13 @@ or auto-increment details). Furthermore each child table has to
 have a foreign key pointing from the id column to the root table id
 column and cascading on delete.
 
+.. _inheritence_mapping_overrides:
 
 Overrides
 ---------
 Used to override a mapping for an entity field or relationship.
 May be applied to an entity that extends a mapped superclass
 to override a relationship or field mapping defined by the mapped superclass.
-
 
 Association Override
 ~~~~~~~~~~~~~~~~~~~~
@@ -339,8 +360,7 @@ Example:
                 <many-to-many field="groups" target-entity="Group" inversed-by="users">
                     <cascade>
                         <cascade-persist/>
-                        <cascade-merge/>
-                        <cascade-detach/>
+                        <cascade-refresh/>
                     </cascade>
                     <join-table name="users_groups">
                         <join-columns>
@@ -388,7 +408,7 @@ Example:
               joinColumn:
                 name: address_id
                 referencedColumnName: id
-              cascade: [ persist, merge ]
+              cascade: [ persist, refresh ]
           manyToMany:
             groups:
               targetEntity: Group
@@ -400,7 +420,7 @@ Example:
                 inverseJoinColumns:
                   group_id:
                     referencedColumnName: id
-              cascade: [ persist, merge, detach ]
+              cascade: [ persist, refresh ]
 
         # admin mapping
         MyProject\Model\Admin:
@@ -421,13 +441,14 @@ Example:
                   admingroup_id:
                     referencedColumnName: id
 
-
 Things to note:
 
 -  The "association override" specifies the overrides base on the property name.
 -  This feature is available for all kind of associations. (OneToOne, OneToMany, ManyToOne, ManyToMany)
 -  The association type *CANNOT* be changed.
 -  The override could redefine the joinTables or joinColumns depending on the association type.
+-  The override could redefine inversedBy to reference more than one extended entity.
+-  The override could redefine fetch to modify the fetch strategy of the extended entity.
 
 Attribute Override
 ~~~~~~~~~~~~~~~~~~~~
@@ -494,7 +515,7 @@ Could be used by an entity that extends a mapped superclass to override a field 
                 <many-to-one field="address" target-entity="Address">
                     <cascade>
                         <cascade-persist/>
-                        <cascade-merge/>
+                        <cascade-refresh/>
                     </cascade>
                     <join-column name="address_id" referenced-column-name="id"/>
                 </many-to-one>
@@ -536,7 +557,6 @@ Could be used by an entity that extends a mapped superclass to override a field 
               unique: false
           #other fields mapping
 
-
         # guest mapping
         MyProject\Model\Guest:
           type: entity
@@ -555,5 +575,24 @@ Could be used by an entity that extends a mapped superclass to override a field 
 Things to note:
 
 -  The "attribute override" specifies the overrides base on the property name.
--  The column type *CANNOT* be changed. if the column type is not equals you got a ``MappingException``
--  The override can redefine all the column except the type.
+-  The column type *CANNOT* be changed. If the column type is not equal you get a ``MappingException``
+-  The override can redefine all the columns except the type.
+
+Query the Type
+--------------
+
+It may happen that the entities of a special type should be queried. Because there
+is no direct access to the discriminator column, Doctrine provides the
+``INSTANCE OF`` construct.
+
+The following example shows how to use ``INSTANCE OF``. There is a three level hierarchy
+with a base entity ``NaturalPerson`` which is extended by ``Staff`` which in turn
+is extended by ``Technician``.
+
+Querying for the staffs without getting any technicians can be achieved by this DQL:
+
+.. code-block:: php
+
+    <?php
+    $query = $em->createQuery("SELECT staff FROM MyProject\Model\Staff staff WHERE staff NOT INSTANCE OF MyProject\Model\Technician");
+    $staffs = $query->getResult();

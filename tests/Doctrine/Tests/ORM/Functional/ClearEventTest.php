@@ -1,31 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Doctrine\Tests\ORM\Functional;
 
 use Doctrine\ORM\Event\OnClearEventArgs;
 use Doctrine\ORM\Events;
-
-require_once __DIR__ . '/../../TestInit.php';
+use Doctrine\Tests\OrmFunctionalTestCase;
 
 /**
  * ClearEventTest
  *
  * @author Michael Ridgway <mcridgway@gmail.com>
  */
-class ClearEventTest extends \Doctrine\Tests\OrmFunctionalTestCase
+class ClearEventTest extends OrmFunctionalTestCase
 {
-    protected function setUp() {
-        parent::setUp();
-    }
-
     public function testEventIsCalledOnClear()
     {
         $listener = new OnClearListener;
-        $this->_em->getEventManager()->addEventListener(Events::onClear, $listener);
+        $this->em->getEventManager()->addEventListener(Events::onClear, $listener);
 
-        $this->_em->clear();
+        $this->em->clear();
 
-        $this->assertTrue($listener->called);
+        self::assertTrue($listener->called);
     }
 }
 

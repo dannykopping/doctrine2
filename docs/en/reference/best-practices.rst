@@ -6,35 +6,17 @@ design generally refer to best practices when working with Doctrine
 and do not necessarily reflect best practices for database design
 in general.
 
-
-Don't use public properties on entities
----------------------------------------
-
-It is very important that you don't map public properties on
-entities, but only protected or private ones. The reason for this
-is simple, whenever you access a public property of a proxy object
-that hasn't been initialized yet the return value will be null.
-Doctrine cannot hook into this process and magically make the
-entity lazy load.
-
-This can create situations where it is very hard to debug the
-current failure. We therefore urge you to map only private and
-protected properties on entities and use getter methods or magic
-\_\_get() to access them.
-
 Constrain relationships as much as possible
 -------------------------------------------
 
 It is important to constrain relationships as much as possible.
 This means:
 
-
 -  Impose a traversal direction (avoid bidirectional associations
    if possible)
 -  Eliminate nonessential associations
 
 This has several benefits:
-
 
 -  Reduced coupling in your domain model
 -  Simpler code in your domain model (no need to maintain
@@ -59,7 +41,7 @@ should use events judiciously.
 Use cascades judiciously
 ------------------------
 
-Automatic cascades of the persist/remove/merge/etc. operations are
+Automatic cascades of the persist/remove/refresh/etc. operations are
 very handy but should be used wisely. Do NOT simply add all
 cascades to all associations. Think about which cascades actually
 do make sense for you for a particular association, given the
@@ -70,7 +52,7 @@ Don't use special characters
 
 Avoid using any non-ASCII characters in class, field, table or
 column names. Doctrine itself is not unicode-safe in many places
-and will not be until PHP itself is fully unicode-aware (PHP6).
+and will not be until PHP itself is fully unicode-aware.
 
 Don't use identifier quoting
 ----------------------------
@@ -90,11 +72,11 @@ collections in entities in the constructor. Example:
     <?php
     namespace MyProject\Model;
     use Doctrine\Common\Collections\ArrayCollection;
-    
+
     class User {
         private $addresses;
         private $articles;
-    
+
         public function __construct() {
             $this->addresses = new ArrayCollection;
             $this->articles = new ArrayCollection;
@@ -123,5 +105,4 @@ transaction. While such short transactions for read-only (SELECT)
 queries generally don't have any noticeable performance impact, it
 is still preferable to use fewer, well-defined transactions that
 are established through explicit transaction boundaries.
-
 
